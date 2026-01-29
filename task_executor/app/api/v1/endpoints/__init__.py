@@ -1,0 +1,25 @@
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.api import deps
+from app.schemas.workflow import WorkflowExecutionCreate, WorkflowExecutionRead
+from app.services.workflow_service import workflow_execution_service
+
+router = APIRouter()
+
+@router.post(
+    "/execution", 
+    response_model=WorkflowExecutionRead, 
+    status_code=status.HTTP_201_CREATED
+)
+async def execute_workflow(
+    payload: WorkflowExecutionCreate,
+    db: AsyncSession = Depends(deps.get_db),
+    # current_user = Depends(deps.get_current_user) # Logic for 'created_by'
+):
+    """
+    Triggers the execution of a predefined workflow.
+    """
+    user_id = "system_user" # Replace with current_user.id in real app
+    return await workflow_execution_service.execute(
+        db, payload=payload, user_id=user_id
+    )
