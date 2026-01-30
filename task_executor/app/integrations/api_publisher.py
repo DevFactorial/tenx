@@ -1,11 +1,11 @@
 import httpx
 import structlog
-from app.schemas import WorkflowTaskUpdate
+from app.schemas.task import WorkflowTaskUpdate
 from app.core.config import settings
 
 logger = structlog.get_logger()
 
-class APICallback:
+class APIPublisher:
     def __init__(self):
         # The URL of your own API that handles task updates
         self.base_url = settings.API_V1_STR 

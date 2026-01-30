@@ -1,15 +1,15 @@
 import asyncio
 import os
 import structlog
-from app.schemas.workflow_defn import RuntimeType
+from app.schemas.task import RuntimeType
 from app.schemas.task import TaskExecutionCreate, WorkflowTaskUpdate
-from app.models.status import WorkflowStatus
-from app.integrations.api_publisher import APICallback
+from app.schemas.status import WorkflowStatus
+from app.integrations.api_publisher import APIPublisher
 
 logger = structlog.get_logger()
 
 class TaskRuntimeService:
-    async def run_task_logic(self, payload: TaskExecutionCreate):
+    async def run_task_logic(self, payload: TaskExecutionCreate, publisher):
         task_input = payload.workflow_task_input
         runtime = payload.task_defn.runtime_config.get("runtime")
         file_name = payload.task_defn.runtime_config.get("file_name")
@@ -52,7 +52,7 @@ class TaskRuntimeService:
         
         
     async def finish_task(self, execution_id: str, task_id: str, result: str, success: bool):
-        callback_client = APICallback()
+        callback_client = APIPublisher()
     
         # Construct the update payload
         status = WorkflowStatus.COMPLETED if success else WorkflowStatus.FAILED

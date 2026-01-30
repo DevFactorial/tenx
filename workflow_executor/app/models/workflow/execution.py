@@ -24,16 +24,6 @@ class WorkflowExecution(Base):
     )
     workflow_input: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
 
-    # Audit Fields
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    created_by: Mapped[str] = mapped_column(String, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
-    updated_by: Mapped[str] = mapped_column(String, nullable=False)
-
     # Relationships
     workflow_metadata: Mapped["WorkflowMetadata"] = relationship(
         "WorkflowMetadata", back_populates="executions"

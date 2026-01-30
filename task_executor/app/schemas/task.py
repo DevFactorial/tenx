@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Any, List, Optional, Union, Literal
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
-from app.models.status import WorkflowStatus
+from app.schemas.status import WorkflowStatus
 
 
 class InputFetchSource(str, Enum):
@@ -69,3 +69,11 @@ class TaskExecutionRead(TaskExecutionCreate):
 class WorkflowTaskUpdate(BaseModel):
     workflow_status: WorkflowStatus  # Maps to workflow_task_status
     workflow_task_output: dict[str, Any] | None = None
+    
+
+class TaskExecutionAccepted(BaseModel):
+    workflow_task_id: str
+    workflow_execution_id: str
+    
+    class Config:
+        from_attributes = True

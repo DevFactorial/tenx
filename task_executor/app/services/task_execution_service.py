@@ -1,28 +1,36 @@
 
-from app.schemas.task import TaskExecutionCreate
-from app.schemas.workflow import WorkflowTaskUpdate
-from app.models.status import WorkflowStatus
+from app.schemas.task import TaskExecutionCreate, TaskExecutionAccepted
+from app.schemas.task import WorkflowTaskUpdate
+from app.schemas.status import WorkflowStatus
+from app.services.task_runtime_service import TaskRuntimeService
+from app.integrations.api_publisher import APIPublisher
 
 class TaskExecutionService:
     async def execute(
-        self,  payload: TaskExecutionCreate, user_id: str
-    ):
-       runtime_config = payload.runtime_config 
+        self,  payload: TaskExecutionCreate, user_id: str,
+        task_runtime_service: TaskRuntimeService,
+        publisher: APIPublisher,
+    ) -> TaskExecutionAccepted:
+       runtime_config = payload.task_defn.runtime_config 
         
        # 2. Invoke the runtime async
        try:
             # We don't 'await' here if you want it truly backgrounded, 
             # OR we await here if this service IS the worker.
-            result = await task_runtime_service.run_task_logic(
+            task_runtime_service.run_task_logic(
                 runtime_config=runtime_config,
-                payload= payload
+                payload= payload,
+                publisher=publisher
             )
-            # 3. Update task status to COMPLETED
-            await self._update_task_status(db, payload.task_id, "COMPLETED", result)
+            
+           
             
        except Exception as e:
             # 4. Handle failure
-            await self._update_task_status(db, payload.task_id, "FAILED", str(e))
+            pass
+            
+       return TaskExecutionAccepted(workflow_execution_id = payload.workflow_execution_id, 
+                                         workflow_task_id = payload.workflow_task_id)
        
         
       

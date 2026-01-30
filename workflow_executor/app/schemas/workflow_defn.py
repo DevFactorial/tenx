@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, List, Optional, Union, Literal
+from typing import Any, List, Optional, Union, Literal, Annotated
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -63,7 +63,7 @@ class WorkflowDefinition(BaseModel):
     model_config = ConfigDict(extra="forbid")
     
     input: List[WorkflowInputDefn] = Field(default_factory=list)
-    tasks: List[Union[TaskDefn, TaskGroupDefn]] = Field(default_factory=list)
+    tasks: List[Annotated[Union[TaskDefn, TaskGroupDefn], Field(discriminator='type')]] = Field(default_factory=list)
 
 # Crucial for Pydantic to resolve recursive references
 TaskGroupDefn.model_rebuild()

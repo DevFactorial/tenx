@@ -2,13 +2,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api import deps
+from app.core import deps
 from app.schemas.metadata import (
     WorkflowMetadataCreate,
     WorkflowMetadataRead,
     WorkflowMetadataUpdate
 )
-from app.services.workflow_metadata_service import metadata_service
+from app.services.workflow_metadata_service import WorkflowMetadataService
 
 router = APIRouter()
 
@@ -20,12 +20,13 @@ router = APIRouter()
 )
 async def create_metadata(
     payload: WorkflowMetadataCreate, 
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    metadata_service: WorkflowMetadataService = Depends(deps.get_metadata_service)
 ):
     """
     Register a new workflow definition in the system.
     """
-    existing = await metadata_service.get(db, workflow_defn_id=payload.workflow_defn_id)
+    existing = await metadata_service.get_by_name(db, name=payload.name)
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
@@ -43,7 +44,8 @@ async def list_metadata(
     name: Optional[str] = Query(None, description="Filter by workflow name (partial match)"),
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    metadata_service: WorkflowMetadataService = Depends(deps.get_metadata_service)
 ):
     """
     Retrieve workflow definitions with optional name filtering and pagination.
@@ -60,7 +62,8 @@ async def list_metadata(
 )
 async def get_metadata(
     workflow_defn_id: str, 
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    metadata_service: WorkflowMetadataService = Depends(deps.get_metadata_service)
 ):
     """
     Fetch a single workflow definition by its unique identifier.
@@ -82,7 +85,8 @@ async def get_metadata(
 async def update_metadata(
     workflow_defn_id: str, 
     payload: WorkflowMetadataUpdate, 
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    metadata_service: WorkflowMetadataService = Depends(deps.get_metadata_service)
 ):
     """
     Update an existing workflow definition. Only provided fields will be modified.
@@ -108,7 +112,8 @@ async def update_metadata(
 )
 async def delete_metadata(
     workflow_defn_id: str, 
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    metadata_service: WorkflowMetadataService = Depends(deps.get_metadata_service)
 ):
     """
     Remove a workflow definition. This will fail if there are active executions 

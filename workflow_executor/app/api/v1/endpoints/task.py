@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api import deps
-from app.services.workflow_service import workflow_execution_service
+from app.core import deps
+from app.services.workflow_service import WorkflowExecutionService
 from app.schemas.task import WorkflowTaskUpdate, WorkflowTaskRead
 
 router = APIRouter()
@@ -14,7 +14,8 @@ async def update_workflow_task(
     workflow_execution_id: str,
     workflow_task_id: str,
     payload: WorkflowTaskUpdate,
-    db: AsyncSession = Depends(deps.get_db)
+    db: AsyncSession = Depends(deps.get_db),
+    workflow_execution_service: WorkflowExecutionService = Depends(deps.get_execution_service),
 ):
     """
     Update the status and output of a specific task within a workflow execution.

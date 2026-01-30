@@ -30,15 +30,6 @@ class WorkflowTaskExecution(Base):
     workflow_task_input: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     workflow_task_output: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
-    # Audit Fields
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    created_by: Mapped[str] = mapped_column(String, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
-    updated_by: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relationships
     execution: Mapped["WorkflowExecution"] = relationship(

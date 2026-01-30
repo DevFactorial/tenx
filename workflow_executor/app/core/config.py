@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_PORT: int = 5432
+    WORKER_BASE_URL: str = None
 
     @computed_field
     @property

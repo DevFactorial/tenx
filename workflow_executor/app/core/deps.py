@@ -25,7 +25,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
         
 # --- Service Dependencies ---
-# These return new instances of your services for each request
+# These return new instances of services for each request
 def get_metadata_service() -> WorkflowMetadataService:
     return WorkflowMetadataService()
 

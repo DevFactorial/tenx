@@ -1,16 +1,23 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Any, Optional
-from workflow_defn import WorkflowInputDefn
+from app.schemas.workflow_defn import WorkflowDefinition
 
 class WorkflowMetadataBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    workflow_defn: WorkflowInputDefn = None
+    workflow_defn: WorkflowDefinition = None
     run_schedule: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
 
 class WorkflowMetadataCreate(WorkflowMetadataBase):
-    workflow_defn_id: str = Field(..., pattern=r"^[a-zA-Z0-9_-]+$")
+    pass
+
+class WorkflowMetadata(WorkflowMetadataBase):
+    # This is the schema returned to the user AFTER creation
+    workflow_defn_id: str
 
 class WorkflowMetadataUpdate(WorkflowMetadataBase):
     name: Optional[str] = None

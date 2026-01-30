@@ -1,18 +1,20 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.workflow import WorkflowExecution, WorkflowStatus
+from app.models.workflow import WorkflowExecution
+from app.models.workflow.status import WorkflowStatus 
 from app.schemas.execution import WorkflowExecutionCreate
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.workflow import WorkflowTaskExecution, WorkflowExecution
-from app.schemas.execution import WorkflowTaskUpdate
+from app.schemas.task import WorkflowTaskUpdate
 from sqlalchemy import func
 from app.models.workflow.status import WorkflowStatus
 from app.services.workflow_metadata_service import WorkflowMetadataService
 from app.integrations.publisher import BasePublisher
 from structlog import get_logger
-from app.schemas.task import TaskExecutionCreate
+from app.schemas.task import TaskExecutionCreate, WorkflowTaskRead
 from fastapi import HTTPException, status
+import structlog
 
 logger = get_logger()
 
@@ -115,8 +117,7 @@ class WorkflowExecutionService:
             workflow_execution_id=execution_id,
             workflow_task_id=task_id,
             workflow_defn_id=defn_id,
-            task_name = task_data.get("task_name"),
-            workflow_task_type=task_data.get("type", "TASK"),
+            task_name = task_data.get("name"),
             workflow_status=WorkflowStatus.PENDING,
             workflow_task_input=task_data.get("input", []),
             created_by=user_id,
@@ -128,13 +129,16 @@ class WorkflowExecutionService:
         # 2. Invoke Publisher
         # We pass the metadata so the worker knows what to run
         try:
-            task_exec_create = TaskExecutionCreate(task_id,
-                                    defn_id,
-                                    execution_id,
-                                    task_data.get("input", []),
-                                    task_data)
+            task_exec_create = TaskExecutionCreate(workflow_task_id=task_id,
+                                    workflow_defn_id=defn_id,
+                                    workflow_execution_id=execution_id,
+                                    workflow_task_input=task_data.get("input", []),
+                                    task_defn=task_data)
+            
             await publisher.publish(
-                task_exec_create
+                task_id=task_id,
+                execution_id=execution_id,
+                payload=task_exec_create.model_dump()
             )
             task_exec.workflow_status = WorkflowStatus.RUNNING
         except Exception as e:
@@ -155,7 +159,7 @@ class WorkflowExecutionService:
             task_id: str, 
             payload: WorkflowTaskUpdate,
             user_id: str
-        ) -> WorkflowTaskExecution | None:
+        ) -> WorkflowTaskRead | None:
             # 1. Fetch current record to check current state
             result = await db.execute(
                 select(WorkflowTaskExecution).where(
@@ -213,7 +217,7 @@ class WorkflowExecutionService:
             # await self._refresh_workflow_status(db, execution_id)
             
             await db.commit()
-            return updated_task
+            return WorkflowTaskRead(execution_id, task_id)
         
     async def _trigger_next_tasks(
         self, 

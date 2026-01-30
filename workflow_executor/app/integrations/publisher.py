@@ -5,6 +5,8 @@ class BasePublisher(ABC):
     @abstractmethod
     async def publish(
         self,
+        execution_id: str, 
+        task_id: str, 
         payload: Any
     ) -> bool:
         """

@@ -6,3 +6,4 @@ class WorkflowStatus(str, enum.Enum):
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    PAUSED = "PAUSED"

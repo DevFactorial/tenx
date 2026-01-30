@@ -5,6 +5,7 @@ from app.core.config import settings
 from structlog import get_logger
 from fastapi import Request
 import uuid
+import structlog
 
 logger = get_logger()
 

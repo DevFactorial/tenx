@@ -1,0 +1,29 @@
+# Web Framework and Server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Database and Migrations
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Validation and Configuration
+pydantic[email]==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Asynchronous HTTP Client (for API Publisher/Callbacks)
+httpx==0.26.0
+
+# Structured Logging and Observability
+structlog==24.1.0
+colorama==0.4.6  # For pretty logs in local dev
+
+# Workflow Logic and Resilience
+tenacity==8.2.3  # For the Retry policies
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+# httpx-mock==0.29.0

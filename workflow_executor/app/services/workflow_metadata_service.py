@@ -3,13 +3,19 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.workflow import WorkflowMetadata
 from app.schemas.metadata import WorkflowMetadataCreate, WorkflowMetadataUpdate
+import uuid
 
 class WorkflowMetadataService:
     async def create(
         self, db: AsyncSession, *, obj_in: WorkflowMetadataCreate, user_id: str
     ) -> WorkflowMetadata:
+        defn_data = obj_in.workflow_defn.model_dump(mode='json')
         db_obj = WorkflowMetadata(
-            **obj_in.model_dump(),
+            workflow_defn_id=f"wf_{uuid.uuid4().hex[:8]}",
+            name=obj_in.name,
+            description=obj_in.description,
+            workflow_defn=defn_data, # Serialization
+            run_schedule=obj_in.run_schedule,
             created_by=user_id,
             updated_by=user_id
         )
@@ -22,6 +28,19 @@ class WorkflowMetadataService:
         result = await db.execute(
             select(WorkflowMetadata).where(WorkflowMetadata.workflow_defn_id == workflow_defn_id)
         )
+        return result.scalars().first()
+    
+    async def get_by_name(self, db: AsyncSession, name: str) -> WorkflowMetadata | None:
+        """
+        Fetch a single workflow metadata record by its name.
+        """
+        # 1. Create the select statement
+        query = select(WorkflowMetadata).where(WorkflowMetadata.name == name)
+        
+        # 2. Execute the query
+        result = await db.execute(query)
+        
+        # 3. Return the first result or None
         return result.scalars().first()
 
     async def get_multi(
