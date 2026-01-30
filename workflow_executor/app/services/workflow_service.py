@@ -12,7 +12,7 @@ from app.models.workflow.status import WorkflowStatus
 from app.services.workflow_metadata_service import WorkflowMetadataService
 from app.integrations.publisher import BasePublisher
 from structlog import get_logger
-from app.schemas.task import TaskExecutionCreate, WorkflowTaskRead
+from app.schemas.task import TaskExecutionCreate, WorkflowTaskUpdateResponse
 from fastapi import HTTPException, status
 import structlog
 
@@ -129,16 +129,23 @@ class WorkflowExecutionService:
         # 2. Invoke Publisher
         # We pass the metadata so the worker knows what to run
         try:
-            task_exec_create = TaskExecutionCreate(workflow_task_id=task_id,
-                                    workflow_defn_id=defn_id,
-                                    workflow_execution_id=execution_id,
-                                    workflow_task_input=task_data.get("input", []),
-                                    task_defn=task_data)
-            
+            execution_data = {
+                "workflow_task_id": task_id,
+                "workflow_defn_id": defn_id,
+                "workflow_execution_id": execution_id,
+                "workflow_task_input": task_data.get("input", [])
+            }
+            merged_data = {**task_data, **execution_data}
+
+            task_obj = TaskExecutionCreate(**merged_data)
+
+            # 3. NOW you can call model_dump on task_obj
+            # (NOT on merged_data)
+            payload = task_obj.model_dump(mode='json')
             await publisher.publish(
                 task_id=task_id,
                 execution_id=execution_id,
-                payload=task_exec_create.model_dump()
+                payload=payload
             )
             task_exec.workflow_status = WorkflowStatus.RUNNING
         except Exception as e:
@@ -159,7 +166,7 @@ class WorkflowExecutionService:
             task_id: str, 
             payload: WorkflowTaskUpdate,
             user_id: str
-        ) -> WorkflowTaskRead | None:
+        ) -> WorkflowTaskUpdateResponse:
             # 1. Fetch current record to check current state
             result = await db.execute(
                 select(WorkflowTaskExecution).where(
@@ -176,7 +183,7 @@ class WorkflowExecutionService:
                 
             # 2. State Machine Validation
             current_status = task.workflow_status
-            new_status = payload.workflow_status
+            new_status = payload.status
 
             if current_status != new_status:  # Only validate if status is changing
                 allowed_statuses = VALID_TRANSITIONS.get(current_status, [])
@@ -187,8 +194,8 @@ class WorkflowExecutionService:
                     )
             # 3. Update the specific task
             task.workflow_status = new_status
-            if payload.workflow_task_output is not None:
-                task.workflow_task_output = payload.workflow_task_output
+            if payload.output is not None:
+                task.workflow_task_output = payload.output
             task.updated_by = user_id
             # updated_at is handled by SQLAlchemy onupdate=func.now()
             query = (
@@ -198,8 +205,8 @@ class WorkflowExecutionService:
                     WorkflowTaskExecution.workflow_task_id == task_id
                 )
                 .values(
-                    workflow_status=payload.workflow_status,
-                    workflow_task_output=payload.workflow_task_output,
+                    workflow_status=payload.status,
+                    workflow_task_output=payload.output,
                     updated_by=user_id,
                     updated_at=func.now()
                 )
@@ -215,9 +222,10 @@ class WorkflowExecutionService:
             # 2. Production Logic: If task is completed, you might want to 
             # check if the whole workflow should transition status.
             # await self._refresh_workflow_status(db, execution_id)
-            
+            self._trigger_next_tasks(db, metadata_service, execution_id, task_id, task.workflow_defn_id, user_id)
             await db.commit()
-            return WorkflowTaskRead(execution_id, task_id)
+            resp = WorkflowTaskUpdateResponse(workflow_task_id=task_id)
+            return resp
         
     async def _trigger_next_tasks(
         self, 

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Any, List, Optional, Union, Literal
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
-from app.schemas.status import WorkflowStatus
+from app.schemas.status import TaskStatus
 
 
 class InputFetchSource(str, Enum):
@@ -45,12 +45,11 @@ class TaskDefn(BaseTask):
     input: List[TaskInputMapping] = Field(default_factory=list)
     output: List[TaskOutputDefn] = Field(default_factory=list)
 
-class TaskExecutionCreate(BaseModel):
+class TaskExecutionCreate(TaskDefn):
     workflow_task_id: str
     workflow_defn_id: str
     workflow_execution_id: str
-    workflow_task_input: dict[str, Any]
-    task_defn: TaskDefn
+    workflow_task_input: List[TaskInputMapping]
     
 class RuntimeType(str, Enum):
     PYTHON = "PYTHON"
@@ -67,13 +66,16 @@ class TaskExecutionRead(TaskExecutionCreate):
         from_attributes = True
         
 class WorkflowTaskUpdate(BaseModel):
-    workflow_status: WorkflowStatus  # Maps to workflow_task_status
-    workflow_task_output: dict[str, Any] | None = None
+    status: TaskStatus  
+    error: Optional[str] = None
+    output: Optional[dict[str, Any]] | None = None
     
 
-class TaskExecutionAccepted(BaseModel):
+class TaskExecutionResponse(BaseModel):
     workflow_task_id: str
     workflow_execution_id: str
+    status: TaskStatus  
+    error: Optional[str] = None
     
     class Config:
         from_attributes = True

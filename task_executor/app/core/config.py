@@ -5,12 +5,17 @@ from pydantic_core import MultiHostUrl
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_ignore_empty=True, extra="ignore"
+        env_file="../.env", env_ignore_empty=True, extra="ignore"
     )
 
-    PROJECT_NAME: str = "Workflow Task Execution Service"
+    PROJECT_NAME: str = "Task Execution Service"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
+    REDIS_URL: str
+    CELERY_QUEUE_NAME: str
+    CELERY_BROKER_URL: str
+    CELERY_RESULT_BACKEND: str
+    WF_CALL_BACK_URL: str
 
 settings = Settings()

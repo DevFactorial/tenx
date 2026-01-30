@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class APIPublisher(BasePublisher):
     def __init__(self):
-        self.worker_url = f"{settings.WORKER_BASE_URL}/v1/tasks/execute"
+        self.worker_url = f"{settings.WORKER_BASE_URL}/api/v1/tasks/run"
         self.timeout = httpx.Timeout(10.0, connect=5.0)
 
     # Retry 3 times, waiting 2^x seconds between tries, 
@@ -34,17 +34,13 @@ class APIPublisher(BasePublisher):
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.post(
                 self.worker_url,
-                json={
-                    "execution_id": execution_id,
-                    "task_id": task_id,
-                    "data": payload
-                }
+                json=payload
             )
             
             # If we get a 5xx, we want to retry. raise_for_status() 
             # helps tenacity catch it if we wrap it properly.
-            if response.status_code >= 500:
+            if response.status_code != 201:
                 logger.warning(f"Worker node error {response.status_code}. Retrying...")
                 response.raise_for_status() 
                 
-            return response.status_code == 200
+            return response.status_code == 201

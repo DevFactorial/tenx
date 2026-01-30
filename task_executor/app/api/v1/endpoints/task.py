@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from app.core import deps
-from app.schemas.task import TaskExecutionCreate, TaskExecutionRead, TaskExecutionAccepted
+from app.schemas.task import TaskExecutionCreate, TaskExecutionRead, TaskExecutionResponse
 from app.services.task_execution_service import TaskExecutionService
 from app.services.task_runtime_service import TaskRuntimeService
 
@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.post(
     "/run", 
-    response_model=TaskExecutionAccepted, 
+    response_model=TaskExecutionResponse, 
     status_code=status.HTTP_201_CREATED,
     summary="Execute a workflow task"
 )
@@ -17,7 +17,7 @@ async def run_task(
     publisher = Depends(deps.get_publisher),
     task_execution_service: TaskExecutionService = Depends(deps.get_task_execution_service),
     task_runtime_service: TaskRuntimeService = Depends(deps.get_task_runtime_service),
-) -> TaskExecutionAccepted:
+) -> TaskExecutionResponse:
     """
     Triggers the execution of a specific task within a workflow context.
     Creates a task execution record and initiates the task logic.

@@ -3,10 +3,6 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 
-# Database and Migrations
-sqlalchemy[asyncio]==2.0.25
-asyncpg==0.29.0
-alembic==1.13.1
 
 # Validation and Configuration
 pydantic[email]==2.5.3
@@ -27,3 +23,6 @@ tenacity==8.2.3  # For the Retry policies
 pytest==7.4.4
 pytest-asyncio==0.23.3
 # httpx-mock==0.29.0
+
+celery==5.3.6
+redis==5.0.1
