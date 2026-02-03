@@ -1,8 +1,8 @@
-"""init
+"""wf init
 
-Revision ID: ee3b7fdf4cfa
+Revision ID: c3f1a9795115
 Revises: 
-Create Date: 2026-01-29 16:30:47.404345
+Create Date: 2026-02-03 11:54:08.167091
 
 """
 from typing import Sequence, Union
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'ee3b7fdf4cfa'
+revision: str = 'c3f1a9795115'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -40,6 +40,7 @@ def upgrade() -> None:
     sa.Column('workflow_defn_id', sa.String(), nullable=False),
     sa.Column('workflow_status', sa.Enum('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'PAUSED', name='workflowstatus'), nullable=False),
     sa.Column('workflow_input', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+    sa.Column('workflow_output', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('created_by', sa.String(length=255), nullable=True),

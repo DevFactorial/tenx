@@ -23,6 +23,7 @@ class WorkflowExecution(Base):
         Enum(WorkflowStatus), default=WorkflowStatus.PENDING, nullable=False
     )
     workflow_input: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    workflow_output: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=True)
 
     # Relationships
     workflow_metadata: Mapped["WorkflowMetadata"] = relationship(
